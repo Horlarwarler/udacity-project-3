@@ -71,11 +71,11 @@ jobs:
       steps:
         - checkout
         - run:
-          name: Scan frontend
-          command: |
-            cd frontend
-            npm install
-            npm audit --audit-level=critical
+              name: Scan frontend
+              command: |
+                cd frontend
+                npm install
+                npm audit --audit-level=critical
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
