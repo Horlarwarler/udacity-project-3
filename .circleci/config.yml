@@ -109,11 +109,11 @@ jobs:
       - checkout
       - run:
             name: Install Tar
-            command: /
+            command: |
               npm i tar
       - run:
             name: Install  zip
-            command: /
+            command: |
               npm i node-gzip
 
       - run:
