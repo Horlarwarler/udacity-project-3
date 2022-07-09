@@ -97,7 +97,7 @@ jobs:
       - checkout
       - run:
           name: Scan backend
-          commansd: |
+          command: |
             cd backend
             npm install
             npm audit fix --audit-level=critical
