@@ -158,7 +158,7 @@ jobs:
           working_directory: ./.circleci/ansible
           command: |
             ansible-playbook -i inventory configure-server.yml
-      - destroy_environment
+      - destroy-environment
 
 workflows:
   default:
