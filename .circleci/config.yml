@@ -188,9 +188,6 @@ jobs:
           name: Run migrations
           command: |
             cd backend
-            npm install
-            echo "Stage 1"
-            npm audit fix --force
             npm run migrations > migrations_dump.txt
             echo "Stage 2"           
       - run:
