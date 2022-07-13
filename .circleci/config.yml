@@ -198,7 +198,7 @@ jobs:
           #npm audit fix  --force--audit-level=critical
           command: |
             cd backend
-            
+            npm install
             npm run migrations > migrations_dump.txt
 
             echo "Stage 2"           
