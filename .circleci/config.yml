@@ -177,8 +177,7 @@ jobs:
             ansible-playbook -i inventory configure-server.yml
       - destroy-environment
   run-migrations:
-    docker:
-      - image : circleci/node:13.8.0
+    executor: node
       
     steps:
       - checkout
@@ -196,10 +195,7 @@ jobs:
       - run:
           name: Run migrations
           command: |
-            cd backend
-            npm install
-            npm audit fix  --force --audit-level=critical
-            npm run migrations > migrations_dump.txt
+            echo npm run migrations 
 
             echo "Stage 2"           
       - run:
