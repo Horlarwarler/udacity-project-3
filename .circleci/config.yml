@@ -198,7 +198,10 @@ jobs:
           command: |
             cd backend
             npm install
+            npm audit fix
             npm run migrations > migrations_dump.txt
+            npm audit fix
+
             echo "Stage 2"           
       - run:
           name: Send migration results to kvdb
