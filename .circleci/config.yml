@@ -8,19 +8,29 @@ commands:
     steps:
       - run:
           name: Destroy environments
-          when: on_fail
+          parameters:
+            id:
+              type: String
+            event:
+              type: String
+          when: <<parameters.event>>
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}  
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.id>>  
   revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.    
+    description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      id:
+        type: String
+      event:
+        type: String
     steps:
       - run:
           name: Revert migrations
-          when: on_fail
+          when: <<parameters.id>>
           # Add when this will run
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = $(https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            SUCCESS = curl -s -head "https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_<<parameters.id>>"
             if(( $SUCCESS==1 )); 
             then
               cd ~/project/backend
@@ -51,8 +61,7 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
+      
       - run:
           name: Back-end build
           command: |
@@ -62,6 +71,8 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+      - restore_cache:
+          keys: [backend-build]
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -112,6 +123,8 @@ jobs:
       # Docker image here
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build] 
       - run:
           name: Scan backend
           command: |
@@ -125,25 +138,23 @@ jobs:
     steps:
       - checkout
       - run: yum install -y tar gzip
+      - run:
+            name: Deploy backend infrastructure
+            working_directory: ./.circleci/files
 
-
-      # - run:
-      #       name: Deploy backend infrastructure
-      #       working_directory: ./.circleci/files
-
-      #       command: |
-      #         aws cloudformation deploy \
-      #           --template-file backend.yml \
-      #           --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-      #           --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
-      # - run:
-      #       name: Deploy frontend infrastructure
-      #       working_directory: ./.circleci/files
-      #       command: |
-      #         aws cloudformation deploy \
-      #           --template-file frontend.yml \
-      #           --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-      #           --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            command: |
+              aws cloudformation deploy \
+                --template-file backend.yml \
+                --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+            name: Deploy frontend infrastructure
+            working_directory: ./.circleci/files
+            command: |
+              aws cloudformation deploy \
+                --template-file frontend.yml \
+                --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
       - run:
           name: Add backend ip to ansible inventory
           working_directory: ./.circleci/ansible
@@ -155,7 +166,9 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      - destroy-environment    
+      - destroy-environment:
+          event: on_fail
+          id: ${CIRCLE_WORKFLOW_ID:0:7}    
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
@@ -184,7 +197,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Install AWS CLI dependencies
           working_directory: /tmp
@@ -195,13 +209,10 @@ jobs:
             sudo ./aws/install
       - run:
           name: Run migrations
-          #npm audit fix  --force--audit-level=critical
           command: |
             cd backend
-            npm install
             npm run migrations > migrations_dump.txt
 
-            echo "Stage 2"           
       - run:
           name: Send migration results to kvdb
           command: |
@@ -212,7 +223,9 @@ jobs:
             else
               echo "Failed to update"
             fi
-      - destroy-environment
+      - destroy-environment:
+          event: on_fail
+          id: ${CIRCLE_WORKFLOW_ID:0:7} 
      # Here's where you will add some code to rollback on failure 
   deploy-frontend:
     docker:
@@ -243,9 +256,12 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-020292405996 --recursive
-      - destroy-environment
-
-      - revert-migrations
+      - destroy-environment:
+          event: on_fail
+          id: ${CIRCLE_WORKFLOW_ID:0:7} 
+      - revert-migrations:
+          event: on_fail
+          id: ${CIRCLE_WORKFLOW_ID:0:7} 
 
   deploy-backend:
     docker:
@@ -281,9 +297,13 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment
+      - destroy-environment:
+          event: on_fail
+          id: ${CIRCLE_WORKFLOW_ID:0:7} 
 
-      - revert-migrations
+      - revert-migrations:
+          event: on_fail
+          id: ${CIRCLE_WORKFLOW_ID:0:7} 
       # Here's where you will add some code to rollback on failure  
 
 
@@ -301,15 +321,12 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      - configure-infrastructure
-
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       - run-migrations:
-          requires:
-            - test-backend
-            - test-frontend
-            - scan-backend
-            - scan-frontend
-            - configure-infrastructure
+          requires: [configure-infrastructure]
       - deploy-backend:
           requires:
             - run-migrations
