@@ -15,7 +15,8 @@ commands:
           name: Destroy environments
           when: <<parameters.when>>
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.id>>  
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.id>>
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.id>>  
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
@@ -214,6 +215,7 @@ jobs:
           command: |
             cd backend
             npm install
+            npm audit fix --audit-level=critical --force
             npm run migrations > migrations_dump.txt
 
       - run:
