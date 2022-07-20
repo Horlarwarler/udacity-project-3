@@ -216,6 +216,7 @@ jobs:
             sudo ./aws/install
       - run:
           name: Run migrations
+          #npm run migrations > migrations_dump.txt
           command: |
             cd backend
             npm cache clean --force
@@ -223,7 +224,8 @@ jobs:
             rm "package-lock.json"
             npm install
             npm audit fix --audit-level=critical --force
-            npm run migrations > migrations_dump.txt
+            echo "Hello"
+            
 
       - run:
           name: Send migration results to kvdb
@@ -339,9 +341,9 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      - deploy-backend:
-          requires:
-            - run-migrations
-      - deploy-frontend:
-          requires:
-            - run-migrations
+      # - deploy-backend:
+      #     requires:
+      #       - run-migrations
+      # - deploy-frontend:
+      #     requires:
+      #       - run-migrations
