@@ -43,48 +43,77 @@ commands:
               npm run migrations:revert
             fi
 jobs:
+
+  install-backend-dependencies:
+    docker:
+      - image: circleci/node:13.8.0
+    
+    steps:
+      - checkout
+      - run: 
+          name: install dependencies
+          command: |
+            cd backend
+            npm install
+      - persist_to_workspace:
+          root: .
+          paths: backend/node_modules
+
+  install-frontend-dependencies:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run: 
+          name: install dependencies
+          command: |
+            cd frontend
+            npm install
+      - persist_to_workspace:
+          root: .
+          paths: frontend/node_modules
+
+
   build-frontend:
 
     docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build]
+      - attach_workspace:
+          at: .
       - run:
           name: Build front-end
           command: |
             cd frontend
             npm install
             npm run build
-      - save_cache:
-          paths: [frontend/node_modules]
-          key: frontend-build
+      
 
   build-backend:
     docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      
+      - attach_workspace:
+          at: .
       - run:
           name: Back-end build
           command: |
             cd backend
             npm install
             npm run build
-      - save_cache:
-          paths: [backend/node_modules]
-          key: backend-build
-      - restore_cache:
-          keys: [backend-build]
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend/dist
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
     steps:
      - checkout
-     - restore_cache:
-          keys: [frontend-build]
+     - attach_workspace:
+          at: .
      - run: 
         name: Test Frontend
         command: |
@@ -100,8 +129,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
      - checkout
-     - restore_cache:
-          keys: [backend-build]
+     - attach_workspace:
+          at: .
      - run: 
         name: Test backend
         command: |
@@ -112,8 +141,11 @@ jobs:
   scan-frontend:
       docker:
       - image: circleci/node:13.8.0
+
       steps:
         - checkout
+        - attach_workspace:
+          at: .
         - run:
               name: Scan frontend
               command: |
@@ -128,8 +160,8 @@ jobs:
       # Docker image here
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build] 
+      - attach_workspace:
+          at: .
       - run:
           name: Scan backend
           command: |
@@ -167,8 +199,9 @@ jobs:
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text >> inventory
+            cat inventory
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
@@ -202,10 +235,8 @@ jobs:
       
     steps:
       - checkout
-      # - attach_workspace:
-      #     at: .
-      - restore_cache:
-          keys: [backend-build]
+      - attach_workspace:
+          at: .
       - run:
           name: Install AWS CLI dependencies
           working_directory: /tmp
@@ -215,14 +246,13 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
       - run:
-      #  npm run migrations > migrations_dump.txt
+      
           name: Run migrations
           
           command: |
             cd backend
             npm install
-            npm audit fix --audit-level=critical --force
-            npm run test
+            npm run migrations > migrations_dump.txt
            
         
             
@@ -325,8 +355,12 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
+      - install-backend-dependencies
+      - install-frontend-dependencies
+      - build-frontend:
+          requires: [install-frontend-dependencies]
+      - build-backend:
+          requires: [install-backend-dependencies]
       - test-backend:
           requires: [build-backend]
       - test-frontend:
