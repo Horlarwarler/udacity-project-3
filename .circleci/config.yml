@@ -202,10 +202,10 @@ jobs:
       
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - restore_cache:
-          keys: [backend-build]
+      # - attach_workspace:
+      #     at: .
+      # - restore_cache:
+      #     keys: [backend-build]
       - run:
           name: Install AWS CLI dependencies
           working_directory: /tmp
@@ -218,6 +218,9 @@ jobs:
           name: Run migrations
           command: |
             cd backend
+            npm cache clean --force
+            rm -rf "node_modules"
+            rm "package-lock.json"
             npm install
             npm audit fix --audit-level=critical --force
             npm run migrations > migrations_dump.txt
