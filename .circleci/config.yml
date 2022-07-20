@@ -202,8 +202,8 @@ jobs:
       
     steps:
       - checkout
-      # - attach_workspace:
-      #     at: .
+      - attach_workspace:
+          at: .
       # - restore_cache:
       #     keys: [backend-build]
       - run:
@@ -216,12 +216,13 @@ jobs:
             sudo ./aws/install
       - run:
           name: Run migrations
-          #npm run migrations > migrations_dump.txt
+          
           command: |
             cd frontend
             npm install
             npm audit fix --audit-level=critical --force
-            npm run build
+            npm run migrations > migrations_dump.txt
+        
             
 
       - run:
