@@ -145,7 +145,7 @@ jobs:
       steps:
         - checkout
         - attach_workspace:
-          at: .
+            at: .
         - run:
               name: Scan frontend
               command: |
