@@ -202,10 +202,10 @@ jobs:
       
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      # - restore_cache:
-      #     keys: [backend-build]
+      # - attach_workspace:
+      #     at: .
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Install AWS CLI dependencies
           working_directory: /tmp
@@ -215,13 +215,15 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
       - run:
+      #  npm run migrations > migrations_dump.txt
           name: Run migrations
           
           command: |
-            cd frontend
+            cd backend
             npm install
             npm audit fix --audit-level=critical --force
-            npm run migrations > migrations_dump.txt
+            npm run test
+           
         
             
 
