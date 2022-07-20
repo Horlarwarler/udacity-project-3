@@ -259,7 +259,7 @@ jobs:
       - run:
           name: Send migration results to kvdb
           command: |
-            sudo apt-get update && sud
+            sudo apt-get update && sudo
             apt-get install -yml
             ca-certificates
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
@@ -281,12 +281,12 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            apk add --update ansible curl rsync openssh nodejs npm
+            pip install awscli
       - run:
           name: Get backend url
           command: |
             cd ./frontend
-            # your code here $
             export BACKEND_IP = (aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
@@ -295,13 +295,17 @@ jobs:
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
-          name: Deploy frontend objects
+          name: Deploy frontend objects to our S3
           command: |
             cd frontend
             npm install
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 cp dist s3://udapeople-020292405996 --recursive
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist
       - destroy-environment:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
@@ -380,6 +384,6 @@ workflows:
       # - deploy-backend:
       #     requires:
       #       - run-migrations
-      # - deploy-frontend:
-      #     requires:
-      #       - run-migrations
+      - deploy-frontend:
+          requires:
+            - run-migrations
