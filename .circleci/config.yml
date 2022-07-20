@@ -70,7 +70,7 @@ jobs:
       - run:
           name: Back-end build
           command: |
-            cd frontend
+            cd backend
             npm install
             npm run build
       - save_cache:
