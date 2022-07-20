@@ -246,7 +246,7 @@ jobs:
             sudo ./aws/install
       - run:
       
-          name: Run migrations
+          name: Run migration
           
           command: |
             cd backend
