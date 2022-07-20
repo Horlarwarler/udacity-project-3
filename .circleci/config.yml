@@ -34,14 +34,14 @@ commands:
           when: <<parameters.when>>
           # Add when this will run
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = $(curl --insecure "https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_<<parameters.id>>")
-            if [ $SUCCESS -eq 1 ]; 
+            SUCCESS=$(curl https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            if [ $SUCCESS -eq 1 ];
             then
-              cd backend
+              cd ~/project/backend
               npm install --legacy-peer-deps
               npm run migrations:revert
             fi
+      
 jobs:
 
   install-backend-dependencies:
@@ -288,11 +288,11 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP = $(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL = ${API_URL}"
+            echo "${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
@@ -340,14 +340,11 @@ jobs:
             npm run build
             rm -rf node_modules
             cd ..
-            # Zip the directory
+            # Zip Backend Directory
             tar -C backend -czvf artifact.tar.gz .
-            #Making a directory
-            mkdir -m 755  .circleci/ansible/roles/deploy/files/
-            cp artifact.tar.gz .circleci/ansible/roles/deploy/files/
+            mkdir -m 755 .circleci/ansible/roles/deploy/files/
+            cp artifact.tar.gz  .circleci/ansible/roles/deploy/files/
             cd .circleci/ansible
-            echo "Contents  of the inventory.txt file is -------"
-            cat inventory.txt
             ansible-playbook -i ./project/.circleci/inventory.txt deploy-backend.yml
       - destroy-environment:
           when: on_fail
@@ -383,9 +380,9 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      # - deploy-backend:
-      #     requires:
-      #       - run-migrations
+      - deploy-backend:
+          requires:
+            - run-migrations
       - deploy-frontend:
           requires:
             - run-migrations
