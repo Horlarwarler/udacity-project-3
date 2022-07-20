@@ -12,10 +12,14 @@ commands:
 
     steps:
       - run:
-          name: Destroy environments
+          name: Destroy backend
           when: <<parameters.when>>
           command: |
             aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.id>>
+      - run:
+          name: Destroy frontend
+          when: <<parameters.when>>
+          command: |
             aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.id>>  
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
