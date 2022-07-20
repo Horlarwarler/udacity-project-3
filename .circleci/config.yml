@@ -198,13 +198,11 @@ jobs:
           command: |
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text >> inventory
-            cat inventory
-            cat inventory.txt
+              --output text >> inventory.txt
       - persist_to_workspace:
           root: .
           paths:
-            - project/.circleci/ansible/inventory
+            - project/.circleci/ansible/inventory.txt
       - destroy-environment:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7}    
