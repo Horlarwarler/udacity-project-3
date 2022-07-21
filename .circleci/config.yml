@@ -338,7 +338,7 @@ jobs:
           working_directory: ./.circleci/ansible
           command: |
             cd backend
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            ansible-playbook -i inventory.txt deploy-backend.yml -vv
       - destroy-environment:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
