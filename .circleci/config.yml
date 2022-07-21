@@ -321,24 +321,33 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
+      
           fingerprints: ["2c:13:7a:4d:8d:0e:c1:91:81:05:9d:4c:c3:92:25:66"]
       - attach_workspace:
           at: .
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
       - run:
           name: Install dependencies
-          working_directory: /tmp
           command: |
-            apk add --update ansible tar gzip curl rsync openssh-server nodejs npm
-            pip install awscli            
+            apk add --update ansible
+            apk add --update openssh-server
+            apk add --no-cache tar gzip curl
+            apk add --update nodejs npm
+            apk --no-cache add --virtual builds-deps build-base python3
+            pip install --upgrade pip && pip install --upgrade awscli
       - run:
           name: Deploy backend
-          working_directory: ./.circleci/ansible
           command: |
-           
-            ansible-playbook -i inventory.txt deploy-backend.yml -vv
+            cd backend
+            npm install --legacy-peer-deps
+            npm run build
+            rm -rf node_modules
+            cd ..
+            # Zip Backend Directory
+            tar -C backend -czvf artifact.tar.gz .
+            mkdir -m 755 .circleci/ansible/roles/deploy/files/
+            cp artifact.tar.gz  .circleci/ansible/roles/deploy/files/
+            cd .circleci/ansible
+            ansible-playbook -i ./project/.circleci/ansible/inventory.txt deploy-backend.yml
       - destroy-environment:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
