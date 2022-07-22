@@ -151,11 +151,12 @@ jobs:
         - attach_workspace:
             at: .
         - run:
+        # npm audit fix --audit-level=critical
               name: Scan frontend
               command: |
                 cd frontend
                 npm install
-                npm audit fix --audit-level=critical
+                
 
 
   scan-backend:
@@ -407,19 +408,18 @@ jobs:
       - revert-migrations:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
-  # cloudfront-update:
-  #   docker:
-  #     - image: amazon/aws-cli
-  #   steps:
-  #     # Checkout code from git
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           # your code here
-  #     - run:
-  #         name: Update cloudfront distribution
-  #         command: |
-  #           # your code here
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            yum install sudo -y
+            yum install -y gcc-c++ make
+            curl -sL https://rpm.nodesource.com/setup_13.x |sudo -E bash -
+            sudo yum install -y nodejs
       # Here's where you will add some code to rollback on failure  
 
 
