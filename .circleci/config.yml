@@ -88,6 +88,9 @@ jobs:
             cd frontend
             npm install
             npm run build
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
       
 
   build-backend:
@@ -325,17 +328,28 @@ jobs:
           fingerprints: ["2c:13:7a:4d:8d:0e:c1:91:81:05:9d:4c:c3:92:25:66"]
       - attach_workspace:
           at: .
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Install dependencies
-          working_directory: /tmp
           command: |
-            apk add --update ansible curl rsync openssh nodejs npm
-            pip install awscli
+            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
       - run:
           name: Deploy backend
           working_directory: ./.circleci/ansible
           command: |
-            ansible-playbook -i ./project/.circleci/ansible/inventory.txt deploy-backend.yml
+            command: |
+            cd backend
+            npm install
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/ 
+            cp artifact.tar.gz  .circleci/ansible/roles/deploy/files/
+            ls .circleci/ansible/roles/deploy/files/
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is ------$(cat inventory.txt)"
+            ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
@@ -345,17 +359,23 @@ jobs:
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
       # Here's where you will add some code to rollback on failure
   smoke-test:
-    docker:
-      - image: python:3.7-alpine3.11
     steps:
       - checkout
-      # Checkout code from git
-          
+      - run: apk add --update tar gzip
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible tar gzip curl rsync openssh-server nodejs npm 
-            pip install --upgrade pip && pip install --upgrade awscli 
+            wget https://nodejs.org/dist/v13.8.0/node-v13.8.0-linux-x64.tar.xz
+            apk add --update --no-cache 
+            apk add --update curl
+            apk add --update npm
+      - run:
+          name: Install dependencies (awscli)
+          command: |
+            apk --no-cache add py-pip
+            pip install awscli
+      - attach_workspace:
+          at: .
       - run:
           name: Backend smoke test.
           command: |
@@ -363,7 +383,7 @@ jobs:
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
-            if curl --insecure "${API_URL}/api/status" | grep "ok"
+            if curl "${API_URL}/api/status" | grep "ok"
             then
                 return 0
             else
