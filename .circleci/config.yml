@@ -397,7 +397,7 @@ jobs:
             echo ${URL} 
             if curl -s --insecure ${URL} | grep "Welcome"
             then
-              return 1
+              return 0
             else
               return 1
             fi
@@ -421,12 +421,60 @@ jobs:
             curl -sL https://rpm.nodesource.com/setup_13.x |sudo -E bash -
             sudo yum install -y nodejs
       - run:
-          name: Get old stack workflow id and store inro kvdp
+          name: Get old stack workflow id and store into a txt decument
           command: |
             export OldWorkflowID=$(aws cloudformation \
               list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
-            curl --insecure https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            echo "${OldWorkflowID}" >> OldWorkflowID.txt
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+      - run:
+          name: Remove old stacks and files
+          command: |
+            OldWorkflowID=$(cat OldWorkflowID.txt)
+            echo currentWorkFlowId: "${CIRCLE_WORKFLOW_ID:0:7}"
+            echo OldWorkflowID:  "${$OldWorkflowID}"
+            if [[ ${CIRCLE_WORKFLOW_ID:0:7} != ${OldWorkflowID} ]]
+            then
+              echo safe to delete
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            else
+              echo nothing to delete
+            fi
+  cleanup:
+    docker:
+      - image: amazon/aws-cli
+      # Docker image here
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Cleanup stacks
+          command: |
+            export OldWorkflowID=$(aws cloudformation list-exports \
+              --query "Exports[?Name==\`Cloudfront-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" \
+              --no-paginate --output text)
+            echo OldWorkflowID=$OldWorkflowID
+            export STACKS=$(aws cloudformation list-stacks \
+              --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
+            echo $STACKS
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            else
+              echo "$OldWorkflowID==$CurrentWorkflowID => nothing needs to be done..."
+            fi
 
       # Here's where you will add some code to rollback on failure  
 
@@ -462,4 +510,8 @@ workflows:
           requires:
             - run-migrations
       - smoke-test:
-          requires: [deploy-frontend, deploy-backend]
+          requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
