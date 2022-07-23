@@ -422,35 +422,23 @@ jobs:
             sudo yum install -y nodejs
       - run:
           name: Get old stack workflow id and store into a txt decument
+          working_directory: ./.circleci/files
           command: |
-            aws cloudformation deploy \
-            --template-file .circleci/files/cloudfront.yml \
-            --stack-name InitialStack \
-            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-            --tags project=udapeople
             export OldWorkflowID=$(aws cloudformation \
               list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
             echo OldWorkflowID: ${OldWorkflowID}
             echo "${OldWorkflowID}" >> OldWorkflowID.txt
             cat OldWorkflowID.txt
-            
-            
-      - run:
-          name: Remove old stacks and files
-          command: |
-            OldWorkflowID=$(cat OldWorkflowID.txt)
-            echo currentWorkFlowId: "${CIRCLE_WORKFLOW_ID:0:7}"
-            echo OldWorkflowID:  "${OldWorkflowID}"
-            if [[ ${CIRCLE_WORKFLOW_ID:0:7} != ${OldWorkflowID} ]]
-            then
-              echo safe to delete
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-            else
-              echo nothing to delete
-            fi
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+      - persist_to_workspace:
+          root: .
+          paths: ./.circleci/files/OldWorkflowID.txt
+      
       - revert-migrations:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
@@ -461,12 +449,13 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Cleanup stacks
           command: |
-            export OldWorkflowID=$(aws cloudformation list-exports \
-              --query "Exports[?Name==\`Cloudfront-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" \
-              --no-paginate --output text)
+            cat OldWorkflowID.txt
+            OldWorkflowID=$(cat OldWorkflowID.txt)
             echo OldWorkflowID=$OldWorkflowID
             export STACKS=$(aws cloudformation list-stacks \
               --query "StackSummaries[*].StackName" \
