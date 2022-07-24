@@ -452,19 +452,12 @@ jobs:
       # Checkout code from git
       - checkout
       - run:
-          name: Install dependencies
-          command: |
-            yum install sudo -y
-            yum install -y gcc-c++ make
-            curl -sL https://rpm.nodesource.com/setup_13.x |sudo -E bash -
-            sudo yum install -y nodejs
-            yum install -y tar gzip
-      - attach_workspace:
-          at: .
-      - run:
           name: Cleanup stacks
           command: |
-            cat OldWorkflowID.txt
+            export OldWorkflowID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            echo OldWorkflowID: ${OldWorkflowID}
             OldWorkflowID=$(cat OldWorkflowID.txt)
             echo OldWorkflowID=$OldWorkflowID
             export STACKS=$(aws cloudformation list-stacks \
