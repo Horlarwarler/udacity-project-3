@@ -478,35 +478,83 @@ jobs:
 workflows:
   default:
     jobs:
-      # - install-backend-dependencies
-      # - install-frontend-dependencies
-      # - build-frontend:
-      #     requires: [install-frontend-dependencies]
-      # - build-backend:
-      #     requires: [install-backend-dependencies]
-      # - test-backend:
-      #     requires: [build-backend]
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      # - deploy-backend:
-      #     requires:
-      #       - run-migrations
-      # - deploy-frontend:
-      #     requires:
-      #       - run-migrations
-      # - smoke-test:
-      #     requires: [deploy-backend, deploy-frontend]
-      #- cloudfront-update
-          #requires: [smoke-test]
-      - cleanup
-          #requires: [cloudfront-update]
+      - install-backend-dependencies:
+          filters:
+            branches:
+              only: [dev-branch]
+      - install-frontend-dependencies:
+          filters:
+            branches:
+              only: [dev-branch]
+      - build-frontend:
+          requires: [install-frontend-dependencies]
+          filters:
+            branches:
+              only: [dev-branch]
+      - build-backend:
+          requires: [install-backend-dependencies]
+          filters:
+            branches:
+              only: [dev-branch]
+      - test-backend:
+          requires: [build-backend]
+          filters:
+            branches:
+              only: [dev-branch]
+      - test-frontend:
+          requires: [build-frontend]
+          filters:
+            branches:
+              only: [dev-branch]
+      - scan-backend:
+          requires: [build-backend]
+          filters:
+            branches:
+              only: [dev-branch]
+      - scan-frontend:
+          requires: [build-frontend]
+          filters:
+            branches:
+              only: [dev-branch]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+          filters:
+            branches:
+              only: [master]
+      - run-migrations:
+          requires: [configure-infrastructure]
+          filters:
+            branches:
+              only: [master]
+      - deploy-backend:
+          requires:
+            - run-migrations
+          filters:
+            branches:
+              only: [master]
+      - deploy-frontend:
+          requires:
+            - run-migrations
+          filters:
+            branches:
+              only: [master]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
+          filters:
+            branches:
+              only: [master]
+      - cloudfront-update:
+          requires: [smoke-test]
+          filters:
+            branches:
+              only: [master]
+      - cleanup:
+          requires: [cloudfront-update]
+          filters:
+            branches:
+              only: [master]
