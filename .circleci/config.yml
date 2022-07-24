@@ -478,10 +478,10 @@ jobs:
 workflows:
   default:
     jobs:
-      - install-backend-dependencies:
+      - install-backend-dependencies
           
             
-      - install-frontend-dependencies:
+      - install-frontend-dependencies
           
             
       - build-frontend:
