@@ -434,8 +434,9 @@ jobs:
             aws cloudformation deploy \
             --template-file cloudfront.yml \
             --stack-name InitialStack \
-            --parameter-overrides WorkflowID2="${CIRCLE_WORKFLOW_ID:0:7}" \
-            --parameter-overrides WorkflowID="${OldWorkflowID}" \
+            --parameters ParameterKey=WorkflowID2,ParameterValue="${CIRCLE_WORKFLOW_ID:0:7}" \ 
+              ParameterKey=WorkflowID,ParameterValue="${OldWorkflowID}" \
+           
             --tags project=udapeople
       - persist_to_workspace:
           root: .
