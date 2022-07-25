@@ -447,6 +447,41 @@ jobs:
       - revert-migrations:
           when: on_fail
           id: ${CIRCLE_WORKFLOW_ID:0:7} 
+  InstallPromethues:
+    docker:
+      - image: python:3.8-alpine3.16
+      # Docker image here that supports Ansible
+    steps:
+      - checkout
+      - add_ssh_keys:
+      
+          fingerprints: ["2c:13:7a:4d:8d:0e:c1:91:81:05:9d:4c:c3:92:25:66"]
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update --no-cache tar gzip rsync nodejs npm ansible curl openssh
+            pip install awscli
+      - run:
+          name: Add backend ip to ansible inventory
+          working_directory: ./.circleci/ansible
+          command: |
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text >> inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+
+            
+      - run:
+          name: Install prometheus
+          command: /
+            
+            ansible-playbook -i inventory.txt deploy-backend.yml
+
+
+
+
   cleanup:
     docker:
       - image: amazon/aws-cli
@@ -536,9 +571,9 @@ workflows:
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
           
-            
-      - cloudfront-update
-          #requires: [smoke-test]
+      - InstallPromethues
+      # - cloudfront-update
+      #     #requires: [smoke-test]
           
             
       # - cleanup:
