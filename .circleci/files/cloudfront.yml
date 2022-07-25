@@ -5,9 +5,6 @@ Parameters:
   WorkflowID2:
     Description: Unique identifier.
     Type: String
-  WorkflowID:
-    Description: Previous WorkflowID.
-    Type: String
 
 
 Resources:
@@ -23,7 +20,8 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "udapeople-${WorkflowID}.s3.amazonaws.com"
+          - DomainName: !ImportValue
+              'Fn::Sub': 'udapeople-${WorkflowID}.s3.amazonaws.com'
             Id: webpage
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
