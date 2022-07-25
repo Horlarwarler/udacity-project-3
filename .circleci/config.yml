@@ -436,7 +436,9 @@ jobs:
             --template-file cloudfront.yml \
             --stack-name InitialStack \
             --parameter-overrides \
-                WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+                WorkflowID="${OldWorkflowID}"
+                WorkflowID2=${CIRCLE_WORKFLOW_ID:0:7}
+
             --tags project=udapeople
       - persist_to_workspace:
           root: .
