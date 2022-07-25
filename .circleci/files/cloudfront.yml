@@ -20,8 +20,9 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !ImportValue
-              'Fn::Sub': 'udapeople-${WorkflowID}.s3.amazonaws.com'
+          - DomainName:
+              Fn::ImportValue:
+                !Sub "udapeople-${WorkflowID}.s3.amazonaws.com"
             Id: webpage
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
