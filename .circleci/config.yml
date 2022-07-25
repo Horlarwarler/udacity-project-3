@@ -436,8 +436,7 @@ jobs:
             --stack-name InitialStack \
              --parameter-overrides \
                WorkflowID2="${CIRCLE_WORKFLOW_ID:0:7}" \
-               WorkflowID= "${OldWorkflowID}"
-
+               WorkflowID= "${OldWorkflowID}" \
             --tags project=udapeople
       - persist_to_workspace:
           root: .
