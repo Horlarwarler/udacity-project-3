@@ -347,15 +347,16 @@ jobs:
             cp artifact.tar.gz  .circleci/ansible/roles/deploy/files/
             ls .circleci/ansible/roles/deploy/files/
             cd .circleci/ansible
+            echo 18.234.201.223 >> inventory.txt
             echo "Contents  of the inventory.txt file is ------$(cat inventory.txt)"
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment:
-          when: on_fail
-          id: ${CIRCLE_WORKFLOW_ID:0:7} 
+      # - destroy-environment:
+      #     when: on_fail
+      #     id: ${CIRCLE_WORKFLOW_ID:0:7} 
 
-      - revert-migrations:
-          when: on_fail
-          id: ${CIRCLE_WORKFLOW_ID:0:7} 
+      # - revert-migrations:
+      #     when: on_fail
+      #     id: ${CIRCLE_WORKFLOW_ID:0:7} 
       # Here's where you will add some code to rollback on failure
   smoke-test:
     docker:
@@ -472,12 +473,6 @@ jobs:
               --output text >> inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-            
-      - run:
-          name: Install prometheus
-          command: /
-            
-            ansible-playbook -i inventory.txt deploy-backend.yml
 
 
 
@@ -558,7 +553,7 @@ workflows:
       #     requires: [configure-infrastructure]
           
             
-      # - deploy-backend:
+      - deploy-backend
       #     requires:
       #       - run-migrations
           
@@ -571,7 +566,7 @@ workflows:
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
           
-      - InstallPromethues
+      #- InstallPromethues
       # - cloudfront-update
       #     #requires: [smoke-test]
           
