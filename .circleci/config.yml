@@ -217,7 +217,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["b8:34:20:8b:51:98:54:b4:04:36:48:38:bd:17:a5:05"]
+          fingerprints: ["2c:13:7a:4d:8d:0e:c1:91:81:05:9d:4c:c3:92:25:66"]
       - attach_workspace:
           at: .
       - run:
@@ -327,7 +327,7 @@ jobs:
       - checkout
       - add_ssh_keys:
       
-          fingerprints: ["b8:34:20:8b:51:98:54:b4:04:36:48:38:bd:17:a5:05"]
+          fingerprints: ["2c:13:7a:4d:8d:0e:c1:91:81:05:9d:4c:c3:92:25:66"]
       - attach_workspace:
           at: .
       - run:
@@ -347,7 +347,7 @@ jobs:
             cp artifact.tar.gz  .circleci/ansible/roles/deploy/files/
             ls .circleci/ansible/roles/deploy/files/
             cd .circleci/ansible
-            echo 3.90.61.166 >> inventory.txt
+            echo 44.203.47.128 >> inventory.txt
             echo "Contents  of the inventory.txt file is ------$(cat inventory.txt)"
             ansible-playbook -i inventory.txt deploy-backend.yml
       # - destroy-environment:
@@ -455,7 +455,7 @@ jobs:
       - checkout
       - add_ssh_keys:
       
-          fingerprints: ["b8:34:20:8b:51:98:54:b4:04:36:48:38:bd:17:a5:05"]
+          fingerprints: ["2c:13:7a:4d:8d:0e:c1:91:81:05:9d:4c:c3:92:25:66"]
       - attach_workspace:
           at: .
       - run:
