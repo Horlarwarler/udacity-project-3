@@ -569,7 +569,7 @@ workflows:
       # - InstallPromethues
 
       - cloudfront-update:
-          requires: [run-migrations]
+          requires: [ deploy-backend]
           
             
       # - cleanup:
