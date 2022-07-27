@@ -568,8 +568,8 @@ workflows:
           
       # - InstallPromethues
 
-      - cloudfront-update:
-          requires: [deploy-backend , deploy-frontend]
+      # - cloudfront-update:
+      #     requires: [deploy-backend , deploy-frontend]
           
             
       # - cleanup:
