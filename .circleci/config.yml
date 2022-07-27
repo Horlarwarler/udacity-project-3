@@ -264,7 +264,7 @@ jobs:
       #       if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
       #       then
       #         echo "Will update kvdb"
-      #         curl --insecure https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_${9241f87}  -d '1'
+      #         curl --insecure https://kvdb.io/FwFkMrXBr4Dd4PrMdeg5XU/migration_${7492d78}  -d '1'
       #       else
       #         echo "Failed to update"
       #       fi
@@ -437,7 +437,7 @@ jobs:
             --template-file cloudfront.yml \
             --stack-name InitialStack \
             --parameter-overrides \
-                WorkflowID=9241f87 \
+                WorkflowID=7492d78 \
             --tags project=udapeople
       - persist_to_workspace:
           root: .
@@ -527,16 +527,16 @@ workflows:
       #         only: [dev-branch]
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
-      # - run-migrations:
+      - run-migrations
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
       #     requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
-      - cloudfront-update
-      #     requires: [smoke-test]
+      - cloudfront-update:
+           requires: [deploy-backend]
       # - cleanup:
       #     requires: [cloudfront-update]
             
