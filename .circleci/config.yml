@@ -516,9 +516,9 @@ workflows:
       - install-frontend-dependencies
       - install-backend-dependencies
       - build-frontend:
-          requires: install-frontend-dependencies
+          requires: [install-frontend-dependencies]
       - build-backend:
-          requires: install-backend-dependencies
+          requires: [install-backend-dependencies]
 
       # - test-frontend:
       #     requires: [build-frontend]
